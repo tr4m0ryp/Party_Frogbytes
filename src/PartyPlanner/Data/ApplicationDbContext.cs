@@ -1,62 +1,138 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using PartyPlanner.Models;
 
 namespace PartyPlanner.Data;
 
-public class ApplicationDbContext : IdentityDbContext
+public sealed class ApplicationDbContext : IdentityDbContext<IdentityUser>
 {
+    private const int KeyLength = 255;
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
+        : base(options) { }
+
+    // ---------- DbSets ----------
+    public DbSet<Party>      Parties     => Set<Party>();
+    public DbSet<Question>   Questions   => Set<Question>();
+    public DbSet<Option>     Options     => Set<Option>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<Response>   Responses   => Set<Response>();
+
+    protected override void OnModelCreating(ModelBuilder b)
     {
+        base.OnModelCreating(b);             // <-- Identity eerst
+        
+        // ⬇️  registreert álle IEntityTypeConfiguration<T> in deze assembly
+        b.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        ConfigureIdentity(b);                // lengte-fixes
+        ConfigureDomain(b);                  // eigen tabellen
     }
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    // ------------------------------------------------------------------
+    // 1. Identity-kolommen ⇢ VARCHAR(255) i.p.v. (long)TEXT
+    // ------------------------------------------------------------------
+    private static void ConfigureIdentity(ModelBuilder b)
     {
-        base.OnModelCreating(builder);
-
-        // Fix MySQL BLOB/TEXT column in key specification issue by setting max length
-        builder.Entity<IdentityUser>(entity =>
+        // Users ---------------------------------------------------------
+        b.Entity<IdentityUser>(e =>
         {
-            entity.Property(m => m.Id).HasMaxLength(255);
-            entity.Property(m => m.NormalizedEmail).HasMaxLength(255);
-            entity.Property(m => m.NormalizedUserName).HasMaxLength(255);
+            e.Property(u => u.Id).HasMaxLength(KeyLength);
+            e.Property(u => u.NormalizedEmail).HasMaxLength(KeyLength);
+            e.Property(u => u.NormalizedUserName).HasMaxLength(KeyLength);
         });
 
-        builder.Entity<IdentityRole>(entity =>
+        // Roles ---------------------------------------------------------
+        b.Entity<IdentityRole>(e =>
         {
-            entity.Property(m => m.Id).HasMaxLength(255);
-            entity.Property(m => m.NormalizedName).HasMaxLength(255);
+            e.Property(r => r.Id).HasMaxLength(KeyLength);
+            e.Property(r => r.NormalizedName).HasMaxLength(KeyLength);
         });
 
-        builder.Entity<IdentityUserLogin<string>>(entity =>
+        // Logins / tokens / claims --------------------------------------
+        b.Entity<IdentityUserLogin<string>>(e =>
         {
-            entity.Property(m => m.LoginProvider).HasMaxLength(255);
-            entity.Property(m => m.ProviderKey).HasMaxLength(255);
-            entity.Property(m => m.UserId).HasMaxLength(255);
+            e.Property(l => l.LoginProvider).HasMaxLength(KeyLength);
+            e.Property(l => l.ProviderKey).HasMaxLength(KeyLength);
+            e.Property(l => l.UserId).HasMaxLength(KeyLength);
         });
 
-        builder.Entity<IdentityUserRole<string>>(entity =>
+        b.Entity<IdentityUserRole<string>>(e =>
         {
-            entity.Property(m => m.UserId).HasMaxLength(255);
-            entity.Property(m => m.RoleId).HasMaxLength(255);
+            e.Property(r => r.UserId).HasMaxLength(KeyLength);
+            e.Property(r => r.RoleId).HasMaxLength(KeyLength);
         });
 
-        builder.Entity<IdentityUserToken<string>>(entity =>
+        b.Entity<IdentityUserToken<string>>(e =>
         {
-            entity.Property(m => m.UserId).HasMaxLength(255);
-            entity.Property(m => m.LoginProvider).HasMaxLength(255);
-            entity.Property(m => m.Name).HasMaxLength(255);
+            e.Property(t => t.UserId).HasMaxLength(KeyLength);
+            e.Property(t => t.LoginProvider).HasMaxLength(KeyLength);
+            e.Property(t => t.Name).HasMaxLength(KeyLength);
         });
 
-        builder.Entity<IdentityRoleClaim<string>>(entity =>
+        b.Entity<IdentityRoleClaim<string>>(e =>
+            e.Property(c => c.RoleId).HasMaxLength(KeyLength));
+
+        b.Entity<IdentityUserClaim<string>>(e =>
+            e.Property(c => c.UserId).HasMaxLength(KeyLength));
+    }
+
+    // ------------------------------------------------------------------
+    // 2. Domein-tabellen
+    // ------------------------------------------------------------------
+    private static void ConfigureDomain(ModelBuilder b)
+    {
+        // ---- Party ----------------------------------------------------
+        b.Entity<Party>(e =>
         {
-            entity.Property(m => m.RoleId).HasMaxLength(255);
+            e.HasMany(p => p.Questions)
+             .WithOne(q => q.Party)
+             .HasForeignKey(q => q.PartyId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasMany(p => p.Invitations)
+             .WithOne(i => i.Party)
+             .HasForeignKey(i => i.PartyId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<IdentityUserClaim<string>>(entity =>
+        // ---- Question -------------------------------------------------
+        b.Entity<Question>(e =>
         {
-            entity.Property(m => m.UserId).HasMaxLength(255);
+            // enum -> tinyint
+            e.Property(q => q.Type).HasConversion<byte>();
+
+            e.HasMany(q => q.Options)
+             .WithOne(o => o.Question)
+             .HasForeignKey(o => o.QuestionId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasMany(q => q.Responses)
+             .WithOne(r => r.Question)
+             .HasForeignKey(r => r.QuestionId);
+        });
+
+        // ---- Invitation ----------------------------------------------
+        b.Entity<Invitation>(e =>
+        {
+            e.HasIndex(i => i.Code).IsUnique();
+
+            e.HasMany(i => i.Responses)
+             .WithOne(r => r.Invitation)
+             .HasForeignKey(r => r.InvitationId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ---- Response -------------------------------------------------
+        b.Entity<Response>(e =>
+        {
+            e.HasIndex(r => new { r.InvitationId, r.QuestionId }).IsUnique();
+
+            e.HasOne(r => r.SelectedOption)
+             .WithMany()
+             .HasForeignKey(r => r.SelectedOptionId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
-}
+} 

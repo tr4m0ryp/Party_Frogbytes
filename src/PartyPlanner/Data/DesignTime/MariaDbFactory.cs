@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using PartyPlanner.Data;
 
-namespace PartyPlanner.DesignTime;
+namespace PartyPlanner.Data.DesignTime;
 
 public sealed class MariaDbFactory
     : IDesignTimeDbContextFactory<ApplicationDbContext>
