@@ -1,14 +1,1 @@
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "server=134.149.216.26;port=3306;database=PartyPlannerDb;user=Robert;password=!QAZxsw2;SslMode=Required;CharSet=utf8mb4;TreatTinyAsBoolean=true;Allow User Variables=true;"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*"
-}
-
-
+not used; used appsettings.json
