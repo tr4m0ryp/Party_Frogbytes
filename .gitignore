@@ -1,0 +1,47 @@
+#################################
+#  .NET & Visual Studio
+#################################
+# build artifacts
+bin/
+obj/
+# user-specific / VS config
+.vs/
+*.user
+*.suo
+# Rider / VS Code
+.idea/
+.vscode/
+################################################################
+#  ASP.NET / EF Core
+################################################################
+# published output
+src/PartyPlanner/bin/
+src/PartyPlanner/obj/
+# secrets & local config (laat deze lokaal!)
+src/PartyPlanner/appsettings.Development.json
+################################################################
+#  Entity Framework Core
+################################################################
+src/PartyPlanner/Migrations/*Designer.cs
+src/PartyPlanner/Migrations/*Snapshot.cs
+# maar **niet** de .cs-migratiebestanden zelf — die zijn wél code!
+!src/PartyPlanner/Migrations/*.cs
+################################################################
+#  Logs & Temp
+################################################################
+*.log
+Logs/
+**/wwwroot/dist/
+################################################################
+#  Docker artefacts
+################################################################
+*.tar
+# Docker compose override dat lokaal kan verschillen
+docker-compose.override.yml
+################################################################
+#  OS / tooling
+################################################################
+# macOS
+.DS_Store
+# Windows
+Thumbs.db

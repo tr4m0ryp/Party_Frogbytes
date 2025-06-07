@@ -1,0 +1,65 @@
+//file path structure:
+PartyPlanner/                       # Git-root & solution
+├─ PartyPlanner.sln
+├─ .gitignore                       # handiger om wél te houden
+├─ docker-compose.yml               # verwijder gerust als je geen Docker gebruikt
+└─ src/
+   └─ PartyPlanner/                 # hoofd-webproject
+      ├─ PartyPlanner.csproj
+      ├─ Program.cs
+      ├─ appsettings.json
+      ├─ appsettings.Development.json
+      ├─ Properties/
+      │  └─ launchSettings.json
+      │
+      ├─ Areas/                     # gegenereerde Identity-pagina’s
+      │  └─ Identity/ …             # (login/registratie UI + code)
+      │
+      ├─ Controllers/
+      │  ├─ HomeController.cs
+      │  ├─ PartyController.cs
+      │  └─ InvitationController.cs
+      │
+      ├─ Data/
+      │  ├─ ApplicationDbContext.cs
+      │  └─ DesignTime/
+      │     └─ MariaDbFactory.cs    # voor `dotnet ef` bij MariaDB
+      │
+      ├─ Domain/                    # kern-entiteiten
+      │  ├─ Models/
+      │  │  ├─ Party.cs
+      │  │  ├─ Question.cs
+      │  │  ├─ Option.cs
+      │  │  ├─ Invitation.cs
+      │  │  └─ Response.cs
+      │  └─ Enums/
+      │     └─ QuestionType.cs
+      │
+      ├─ ViewModels/
+      │  ├─ PartyCreateViewModel.cs
+      │  ├─ QuestionBuilderViewModel.cs
+      │  └─ InviteViewModel.cs
+      │
+      ├─ Services/
+      │  ├─ InvitationService.cs
+      │  └─ EmailSender.cs          # optioneel – weg laten als je geen mail stuurt
+      │
+      ├─ Migrations/ …              # automatisch gevuld door EF Core
+      │
+      ├─ Views/
+      │  ├─ Shared/
+      │  │  ├─ _Layout.cshtml
+      │  │  └─ _ValidationScriptsPartial.cshtml
+      │  ├─ Home/Index.cshtml
+      │  ├─ Party/
+      │  │  ├─ Index.cshtml
+      │  │  ├─ Create.cshtml
+      │  │  ├─ Builder.cshtml
+      │  │  └─ Results.cshtml
+      │  └─ Invite/
+      │     ├─ Index.cshtml
+      │     └─ Thanks.cshtml
+      │
+      └─ wwwroot/
+         ├─ css/site.css
+         └─ js/question-builder.js
