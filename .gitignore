@@ -17,9 +17,13 @@ obj/
 # published output
 src/PartyPlanner/bin/
 src/PartyPlanner/obj/
-# secrets & local config (laat deze lokaal!)
-src/PartyPlanner/appsettings.Development.json
-src/PartyPlanner/appsettings.json
+# secrets & local config (these should never be committed)
+# Use appsettings.template.json as a reference
+**/appsettings.json
+**/appsettings.Development.json
+**/developer.appsettings.json
+# But allow template files
+!**/appsettings.template.json
 ################################################################
 #  Entity Framework Core
 ################################################################

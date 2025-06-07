@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace PartyPlanner.Domain.Models;
+namespace PartyPlanner.Models;
 
 [Index(nameof(Code), IsUnique = true)]
 public class Invitation

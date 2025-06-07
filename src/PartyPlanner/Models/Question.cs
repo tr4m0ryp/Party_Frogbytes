@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using PartyPlanner.Domain.Enums;
 
-namespace PartyPlanner.Domain.Models;
+namespace PartyPlanner.Models;
 
 [Index(nameof(PartyId))]
 public class Question

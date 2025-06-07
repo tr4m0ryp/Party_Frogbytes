@@ -1,4 +1,4 @@
-namespace PartyPlanner.Domain.Enums;
+namespace PartyPlanner.Models;
 
 public enum QuestionType
 {

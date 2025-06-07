@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace PartyPlanner.Domain.Models;
+namespace PartyPlanner.Models;
 
 [Index(nameof(InvitationId), nameof(QuestionId), IsUnique = true)]
 public class Response
 {
     public int Id { get; set; }
 
-    // ---------- FK’s ----------
+    // ---------- FK's ----------
     public int InvitationId { get; set; }
     public Invitation Invitation { get; set; } = default!;
 
