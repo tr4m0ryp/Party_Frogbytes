@@ -19,6 +19,7 @@ src/PartyPlanner/bin/
 src/PartyPlanner/obj/
 # secrets & local config (laat deze lokaal!)
 src/PartyPlanner/appsettings.Development.json
+src/PartyPlanner/appsettings.json
 ################################################################
 #  Entity Framework Core
 ################################################################

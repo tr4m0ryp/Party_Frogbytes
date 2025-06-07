@@ -1,30 +1,79 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PartyPlanner.Data;
+using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+// ------------------------------------------------------------
+// 1.  Connection-string ophalen
+//    • eerst environment-variable (prod)
+//    • anders uit appsettings (dev)
+// ------------------------------------------------------------
+var conn = Environment.GetEnvironmentVariable(
+              "ConnectionStrings__DefaultConnection")
+          ?? builder.Configuration.GetConnectionString("DefaultConnection")
+          ?? throw new InvalidOperationException(
+                 "Connection string 'DefaultConnection' not found.");
+
+// ------------------------------------------------------------
+// 2.  DbContext registreren (Pomelo/MariaDB)
+//    • ServerVersion.AutoDetect leest versie bij de 1e connect
+//    • Connection resiliency: 3 retries, max 5 s tussenpogingen
+// ------------------------------------------------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseMySql(conn, 
+        ServerVersion.AutoDetect(conn),
+        mySqlOpt => 
+        {
+            mySqlOpt.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorNumbersToAdd: null);
+            
+            // Configure MySQL migrations history table
+            mySqlOpt.MigrationsHistoryTable("__EFMigrationsHistory");
+        }));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+// ------------------------------------------------------------
+// 3.  Identity & authenticatie
+// ------------------------------------------------------------
+builder.Services.AddDefaultIdentity<IdentityUser>(opt =>
+    {
+        opt.SignIn.RequireConfirmedAccount = true;
+        opt.Password.RequiredLength = 8;
+        opt.Password.RequireNonAlphanumeric = false;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.ConfigureApplicationCookie(opt =>
+{
+    opt.Cookie.Name = ".PartyPlanner.Auth";
+    opt.LoginPath   = "/Identity/Account/Login";
+    opt.AccessDeniedPath = "/Identity/Account/AccessDenied";
+});
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ------------------------------------------------------------
+// 4.  HTTP-pipeline
+// ------------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
-    app.UseMigrationsEndPoint();
+    app.UseDeveloperExceptionPage();
+    app.UseMigrationsEndPoint();                 // live migraties
 }
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -33,11 +82,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();  // <- vóór Authorization
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
+app.MapRazorPages();
 app.Run();
