@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.16" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.16" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.4" />
   </ItemGroup>
 
 </Project>
